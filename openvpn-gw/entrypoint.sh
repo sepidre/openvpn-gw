@@ -28,7 +28,7 @@ chmod 600 /vpn/auth.txt
 
 openvpn --config /vpn/client.ovpn \
         --auth-user-pass /vpn/auth.txt \
-        --socks-proxy ${PROXY} ${PROXYPORT} \
+        --socks-proxy $PROXY $PROXYPORT \
         --daemon
 
 sleep 5
