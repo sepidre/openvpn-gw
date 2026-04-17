@@ -1,0 +1,36 @@
+services:
+  openvpn-gw:
+    image: ghcr.io/sepidre/openvpn-gw:latest  # ✅ pre-built
+    container_name: openvpn-gw
+    environment:
+      - VPN_USER=${VPN_USER}
+      - VPN_PASS=${VPN_PASS}
+      - TOTP_SECRET=${TOTP_SECRET}    # can leave empty if AUTH_MODE=pwd
+      - AUTH_MODE=${AUTH_MODE}        # pwd | pwd+token | token+pwd
+      - PROXY=${PROXY}                # socks5 Proxy host
+      - PROXYPORT=${PROXYPORT}        # socks5 Proxy port
+    volumes:
+      - ./vpn/client.ovpn:/vpn/client.ovpn:ro
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    networks:
+      - termix-net
+    depends_on:
+      - tailscale-socks
+    restart: unless-stopped
+
+  rdp-proxy-vpn:
+    image: gogost/gost:3
+    container_name: rdp-proxy-vpn
+    command: -L tcp://:3389/${RDP_TARGET}:3389 -F socks5h://openvpn-gw:1056
+    networks:
+      - termix-net
+    depends_on:
+      - openvpn-gw
+    restart: unless-stopped
+
+networks:
+  termix-net:
+    external: true
